@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#97d9e1">
+    <title>Album Art Downloader</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dongle&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Dongle', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            height: 100%;
+            background-image: linear-gradient(to top, #d9afd9 0%, #97d9e1 100%);
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        #search {
+            font-size: 2vh;
+            border: 1px solid black;
+            border-radius: 5px;
+            width: 22vh;
+        }
+
+        #searchbtn {
+            font-size: 2vh;
+            border: 1px solid black;
+            border-radius: 5px;
+        }
+
+        #main {
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        #results {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            float: left;
+            margin-top: 10px;
+            font-size:larger;
+            margin: 1vh;
+            border: 1px solid black;
+            border-radius: 3px;
+        }
+
+        .album {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100px;
+            margin: 10px;
+        }
+
+        .albumTitle {
+            margin-bottom: 5px;
+            font-size: 1.8vh;
+            text-align: center;
+            height: 50px;
+        }
+
+        .artwork {
+            margin-bottom: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+
+        .downloadButton {
+            margin-top: 5px;
+            padding: 5px 20px;
+            background-color: #db972fe1;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+  }
+
+        .album button:hover {
+            background-color: #8a5506e1;
+        }
+
+        #footer {
+            position: fixed;
+            top: 98%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2vh;
+            
+        }
+        a {
+            text-decoration: none;
+            color: rgb(56, 56, 56);
+        }
+    </style>
+</head>
+<body>
+    <div id="main">
+    <h1>Album Art Downloader</h1>
+    <input type="text" id="search" placeholder="Search for an artist..."/>
+    <button id="searchbtn" onClick="searchArtist()">Search</button>
+    <div id="countresult" style="font-size: 18px;"></div>    
+    </div>
+    <div>
+    <div id="results"></div>
+    <div id="footer">
+        <p><a href="https://github.com/wjdgns4019">Dev : wjdgns4019</a>, API : last.fm</p>
+    </div>
+</div>
+    
+    <script>
+        async function searchArtist() {
+        const apiKey = "45a176823e72a87b0637ed6059e0a4a3";
+        const search = document.getElementById("search").value;
+        const apiUrl = `https://ws.audioscrobbler.com/2.0/?method=artist.search&artist=${search}&format=json&api_key=${apiKey}`;
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        const artist = data.results.artistmatches.artist[0].name;
+
+        searchAlbum(artist);
+    }
+
+    async function searchAlbum(artist) {
+        const apiUrl = `https://itunes.apple.com/search?entity=album&attribute=artistTerm&term=${encodeURIComponent(artist)}`;
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        const albums = data.results;
+        const count = data.resultCount;
+        
+        displayAlbums(albums, count);
+    }
+
+        function displayAlbums(albums, count) {
+
+            const results = document.getElementById("results");
+            results.innerHTML = "";
+            const counts = document.getElementById("countresult");
+            const artistname = document.getElementById("search").value;
+            counts.innerText = `${artistname}의 앨범은 ${count}개 입니다.`;
+
+            for (let i = 0; i < albums.length; i++) {
+                const album = albums[i];
+                const albumDiv = document.createElement("div");
+                albumDiv.classList.add("album");
+
+                const albumTitle = document.createElement("h3");
+                albumTitle.innerText = album.collectionName;
+                albumTitle.classList.add("albumTitle");
+                albumDiv.appendChild(albumTitle);
+
+                const artwork = document.createElement("img");
+                artwork.src = album.artworkUrl100.replace("100x100", "1400x1400");
+                artwork.width = 100;
+                artwork.height = 100;
+                artwork.classList.add("artwork");
+                albumDiv.appendChild(artwork);
+
+                const downloadButton = document.createElement("button");
+                downloadButton.setAttribute("id", "downbtn");
+                downloadButton.innerText = "Download";
+                downloadButton.classList.add("downloadButton");
+                downloadButton.addEventListener("click", () => {
+                    downloadArtwork(artwork.src);
+                });
+                albumDiv.appendChild(downloadButton);
+
+                results.appendChild(albumDiv);
+            }
+        }
+
+        function downloadArtwork(url) {
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "album_art.jpg";
+            link.target = "_blank";
+            link.click();
+        }
+    </script>
+</body>
+</html>
